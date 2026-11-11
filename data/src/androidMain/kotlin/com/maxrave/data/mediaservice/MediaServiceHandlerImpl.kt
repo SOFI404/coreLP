@@ -10,6 +10,7 @@ import android.media.audiofx.LoudnessEnhancer
 import com.maxrave.common.ASC
 import com.maxrave.common.CUSTOM_ORDER
 import com.maxrave.common.Config.ALBUM_CLICK
+import com.maxrave.common.Config.LOCAL_MEDIA_ID_PREFIX
 import com.maxrave.common.Config.PLAYLIST_CLICK
 import com.maxrave.common.Config.RADIO_CLICK
 import com.maxrave.common.Config.RECOVER_TRACK_QUEUE
@@ -637,6 +638,22 @@ internal class MediaServiceHandlerImpl(
     }
 
     private fun getDataOfNowPlayingState(mediaItem: GenericMediaItem) {
+        // Device audio uses content:// URIs and must never enter the YouTube song database,
+        // Last.fm scrobbling, SponsorBlock, or stream-format lookup pipeline.
+        if (mediaItem.mediaId.startsWith(LOCAL_MEDIA_ID_PREFIX)) {
+            getDataOfNowPlayingTrackStateJob?.cancel()
+            songEntityJob?.cancel()
+            _format.value = null
+            _skipSegments.value = null
+            _controlState.update { it.copy(isLiked = false) }
+            _nowPlayingState.value =
+                NowPlayingTrackState(
+                    mediaItem = mediaItem,
+                    track = null,
+                    songEntity = null,
+                )
+            return
+        }
         val videoId =
             if (mediaItem.isVideo()) {
                 mediaItem.mediaId.removePrefix(MERGING_DATA_TYPE.VIDEO)
