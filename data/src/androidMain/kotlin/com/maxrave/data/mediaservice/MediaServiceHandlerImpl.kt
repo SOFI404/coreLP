@@ -645,6 +645,11 @@ internal class MediaServiceHandlerImpl(
             songEntityJob?.cancel()
             _format.value = null
             _skipSegments.value = null
+            _queueData.value =
+                QueueData(
+                    queueState = QueueData.StateSource.STATE_CREATED,
+                    data = QueueData.Data(),
+                )
             _controlState.update { it.copy(isLiked = false) }
             _nowPlayingState.value =
                 NowPlayingTrackState(
