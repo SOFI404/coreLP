@@ -267,6 +267,11 @@ private fun provideResolvingDataSourceFactory(
 ): DataSource.Factory {
     val chunkLength = 10 * 512 * 1024L
     return ResolvingDataSource.Factory(cacheDataSourceFactory) { dataSpec ->
+        // Android MediaStore content:// and file:// sources are already playable URIs.
+        // Do not send them through the YouTube stream resolver or cache-key logic.
+        if (dataSpec.uri.scheme == "content" || dataSpec.uri.scheme == "file") {
+            return@Factory dataSpec
+        }
         val mediaId = dataSpec.key ?: error("No media id")
         val videoId = mediaId.removePrefix(MERGING_DATA_TYPE.VIDEO)
         // A live broadcast reached a progressive source that was built before it was known to be
