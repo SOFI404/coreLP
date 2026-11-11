@@ -12,6 +12,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.MergingMediaSource
 import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
+import com.maxrave.common.Config.LOCAL_MEDIA_ID_PREFIX
 import com.maxrave.common.MERGING_DATA_TYPE
 import com.maxrave.domain.data.player.LiveStreamRegistry
 import com.maxrave.domain.manager.DataStoreManager
@@ -45,6 +46,10 @@ internal class MergingMediaSourceFactory(
     override fun getSupportedTypes(): IntArray = defaultMediaSourceFactory.supportedTypes
 
     override fun createMediaSource(mediaItem: MediaItem): MediaSource {
+        // Local device tracks use content:// URIs and must bypass YouTube-specific merging.
+        if (mediaItem.mediaId.startsWith(LOCAL_MEDIA_ID_PREFIX)) {
+            return defaultMediaSourceFactory.createMediaSource(mediaItem)
+        }
         if (LiveStreamRegistry.isLive(mediaItem.mediaId)) {
             // One HLS playlist carrying audio and video together: no merge, and none of the
             // progressive resolver's caching or chunking.
